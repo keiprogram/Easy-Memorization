@@ -1,31 +1,37 @@
-# Streamlitライブラリをインポート
 import streamlit as st
+import pandas as pd
+import random
 
-# ページ設定（タブに表示されるタイトル、表示幅）
-st.set_page_config(page_title="タイトル", layout="wide")
+# アプリのタイトル
+st.title("暗記学習アプリ")
 
-# タイトルを設定
-st.title('Streamlitのサンプルアプリ')
+# Excelファイルのアップロード
+uploaded_file = st.file_uploader("学習用のExcelファイルをアップロードしてください", type=["xlsx"])
 
-# テキスト入力ボックスを作成し、ユーザーからの入力を受け取る
-user_input = st.text_input('あなたの名前を入力してください')
+if uploaded_file:
+    # アップロードされたファイルをデータフレームとして読み込み
+    df = pd.read_excel(uploaded_file)
 
-# ボタンを作成し、クリックされたらメッセージを表示
-if st.button('挨拶する'):
-    if user_input:  # 名前が入力されているかチェック
-        st.success(f'🌟 こんにちは、{user_input}さん! 🌟')  # メッセージをハイライト
+    # 必要なカラムがあるか確認
+    if "問題" in df.columns and "解答" in df.columns:
+        st.success("ファイルの読み込みに成功しました！")
+        
+        # 問題をランダムに出題
+        if st.button("問題を出題"):
+            question = df.sample(1).iloc[0]
+            st.write(f"**問題:** {question['問題']}")
+            
+            # 解答入力
+            user_answer = st.text_input("あなたの解答を入力してください")
+
+            if st.button("解答を確認"):
+                correct_answer = question['解答']
+                if user_answer.strip() == correct_answer.strip():
+                    st.success("正解です！")
+                else:
+                    st.error(f"不正解です。正しい答えは: {correct_answer}")
     else:
-        st.error('名前を入力してください。')  # エラーメッセージを表示
+        st.error("Excelファイルには '問題' と '解答' カラムが必要です。")
 
-# スライダーを作成し、値を選択
-number = st.slider('好きな数字（10進数）を選んでください', 0, 100)
-
-# 補足メッセージ
-st.caption("十字キー（左右）でも調整できます。")
-
-# 選択した数字を表示
-st.write(f'あなたが選んだ数字は「{number}」です。')
-
-# 選択した数値を2進数に変換
-binary_representation = bin(number)[2:]  # 'bin'関数で2進数に変換し、先頭の'0b'を取り除く
-st.info(f'🔢 10進数の「{number}」を2進数で表現すると「{binary_representation}」になります。 🔢')  # 2進数の表示をハイライト
+# ヒント
+st.info("ヒント: Excelファイルには '問題' と '解答' という列名が必要です。")
